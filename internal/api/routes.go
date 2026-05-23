@@ -3,24 +3,26 @@ package api
 import (
 	"log/slog"
 	"net/http"
-
-	"github.com/user/cronlog/internal/store"
 )
 
-// NewRouter builds and returns an http.ServeMux with all API routes registered.
-func NewRouter(s *store.Store, logger *slog.Logger) http.Handler {
-	h := NewHandler(s, logger)
-
+// NewRouter builds and returns the HTTP mux with all routes registered.
+// Middleware (logging, recovery) is applied to the entire mux.
+func NewRouter(h *Handler, logger *slog.Logger) http.Handler {
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /entries", h.ListEntries)
-	mux.HandleFunc("GET /stats", h.GetStats)
-	mux.HandleFunc("GET /healthz", healthz)
 
-	return mux
+	mux.HandleFunc("GET /healthz", healthz)
+	mux.HandleFunc("GET /api/v1/entries", h.ListEntries)
+	mux.HandleFunc("GET /api/v1/entries/{job}", h.ListEntriesByJob)
+
+	var handler http.Handler = mux
+	handler = RequestLogger(logger)(handler)
+	handler = Recoverer(logger)(handler)
+
+	return handler
 }
 
-// healthz is a simple liveness probe.
 func healthz(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write([]byte("ok"))
+	_, _ = w.Write([]byte(`{"status":"ok"}`))
 }
