@@ -1,0 +1,30 @@
+# cronlog example configuration
+# Copy to config.yaml and adjust for your environment.
+
+server:
+  # Address the HTTP API listens on.
+  addr: ":8080"
+  read_timeout: 15s
+  write_timeout: 15s
+
+storage:
+  # Supported drivers: sqlite, postgres
+  driver: sqlite
+  # SQLite: path to database file
+  # Postgres: connection string e.g. postgres://user:pass@host/dbname?sslmode=disable
+  dsn: cronlog.db
+
+retention:
+  # Remove log entries older than this many days (0 = keep forever).
+  max_age_days: 30
+  # Maximum number of log entries kept per job (0 = unlimited).
+  max_entries_per_job: 500
+
+notify:
+  # Set to true to send email alerts when a cron job fails.
+  enabled: false
+  smtp_host: smtp.example.com
+  smtp_port: 587
+  from: cronlog@example.com
+  to:
+    - ops@example.com
