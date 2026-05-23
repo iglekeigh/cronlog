@@ -3,22 +3,21 @@ package api
 import (
 	"log/slog"
 	"net/http"
+
+	"github.com/user/cronlog/internal/store"
 )
 
-// NewRouter builds and returns the HTTP mux with all routes registered.
-// Middleware (logging, recovery) is applied to the entire mux.
-func NewRouter(h *Handler, logger *slog.Logger) http.Handler {
+func NewRouter(s *store.Store, log *slog.Logger) http.Handler {
+	h := NewHandler(s, log)
+
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /healthz", healthz)
 	mux.HandleFunc("GET /api/v1/entries", h.ListEntries)
-	mux.HandleFunc("GET /api/v1/entries/{job}", h.ListEntriesByJob)
+	mux.HandleFunc("GET /api/v1/stats", h.HandleStats)
+	mux.HandleFunc("GET /api/v1/export", h.HandleExport)
 
-	var handler http.Handler = mux
-	handler = RequestLogger(logger)(handler)
-	handler = Recoverer(logger)(handler)
-
-	return handler
+	return RequestLogger(log, Recoverer(mux))
 }
 
 func healthz(w http.ResponseWriter, _ *http.Request) {
