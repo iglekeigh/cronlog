@@ -77,6 +77,10 @@ func (h *LabelHandler) setLabels(w http.ResponseWriter, r *http.Request, idStr s
 		http.Error(w, "invalid body", http.StatusBadRequest)
 		return
 	}
+	if len(labels) == 0 {
+		http.Error(w, "labels must not be empty", http.StatusBadRequest)
+		return
+	}
 	if err := h.store.SetLabels(id, labels); err != nil {
 		h.logger.Error("set labels", "err", err)
 		http.Error(w, "internal error", http.StatusInternalServerError)
@@ -102,8 +106,5 @@ func (h *LabelHandler) listByLabel(w http.ResponseWriter, r *http.Request) {
 		ids = []int64{}
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]any{"entry_ids": ids, "count": len(ids)}) //nolint:errcheck
+	json.NewEncoder(w).Encode(ids) //nolint:errcheck
 }
-
-// compile-time check
-var _ LabelStore = (*store.Store)(nil)
